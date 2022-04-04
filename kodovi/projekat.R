@@ -36,21 +36,34 @@ dfSimple[-1] <- dfSimple[-1] - df[20:37]
 colnames(dfSimple) <- paste(replicate(19, "diff"), colnames(dfSimple), sep="")
 colnames(dfSimple)[1] <- "WL"
 
+genTrainingData <- function(df, q){
+  indeksi <- sample(1:nrow(df), size = q*nrow(df))
+  return(indeksi)
+}
 
 set.seed(1000)
-###################################################################
-index <- sample(seq_len(nrow(df)), size = 0.75*nrow(df))
-trainingData <- df[index,]
-predictionData <- df[-index,]
-###################################################################
-index <- sample(seq_len(nrow(dfSimple)), size = 0.75*nrow(dfSimple))
+index <- genTrainingData(dfSimple, 0.90)
 trainingData <- dfSimple[index,]
 predictionData <- dfSimple[-index,]
-###################################################################
-prop.table(table(trainingData$WL))
-prop.table(table(predictionData$WL))
 
-model <- rpart(WL ~ .-diffPTS-diffFGpct-diffFGM-diffDREB, data = trainingData)
+index <- genTrainingData(df, 0.75)
+trainingData <- df[index,]
+predictionData <- df[-index,]
+
+index <- genTrainingData(dfSimple, 0.60)
+trainingData <- dfSimple[index,]
+predictionData <- dfSimple[-index,]
+
+#prop.table(table(trainingData$WL))
+#prop.table(table(predictionData$WL))
+
+model <- rpart(WL ~ .-PTS-oppPTS-FGpct-oppFGpct-FGM-oppFGM, data = trainingData)
+rpart.plot(model)
+model$variable.importance
+model <- prune.rpart(model, cp=0.03) #plotcp(model) za odnos cp - sizeOfTree
+rpart.plot(model)
+
+model <- rpart(WL ~ .-diffPTS-diffFGpct-diffFGM, data = trainingData)
 rpart.plot(model)
 model$variable.importance
 model <- prune.rpart(model, cp=0.03) #plotcp(model) za odnos cp - sizeOfTree
@@ -58,7 +71,6 @@ rpart.plot(model)
 
 results <- predict(model, predictionData, type = "class")
 sum(results == predictionData$WL)/nrow(predictionData)
-
 
 
 # model <- tree(WL ~ .-diffPTS, data = trainingData)

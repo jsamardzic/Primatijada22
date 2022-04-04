@@ -38,29 +38,38 @@ colnames(df)[c(5,11,23,29)] <- c("FGpct", "FTpct", "oppFGpct", "oppFTpct")
 rm(dfopp)
 rm(dfteam)
 
+dfSimple <- data.frame(df[, 1:19])
+dfSimple[-1] <- dfSimple[-1] - df[20:37]
+colnames(dfSimple) <- paste(replicate(19, "diff"), colnames(dfSimple), sep="")
+colnames(dfSimple)[1] <- "WL"
+
+
 write_xlsx(df, path = "./data/NBA_DataSet_Version2.xlsx")
 
 
-
 set.seed(1000)
+###################################################################
 index <- sample(seq_len(nrow(df)), size = 0.75*nrow(df))
-test75 <- df[index,]
+training75 <- df[index,]
 pred75 <- df[-index,]
-
-prop.table(table(test75$WL))
+###################################################################
+index <- sample(seq_len(nrow(dfSimple)), size = 0.75*nrow(dfSimple))
+training75 <- dfSimple[index,]
+pred75 <- dfSimple[-index,]
+###################################################################
+prop.table(table(training75$WL))
 prop.table(table(pred75$WL))
 
-# model <- C5.0(test75[,c(-1,-2,-3,-20,-21)],test75$WL)
-
-model <- rpart(WL ~ .-PTS-oppPTS-FGpct-oppFGpct-FGM-oppFGM, data = test75)
+model <- rpart(WL ~ .-diffPTS-diffFGpct-diffFGM-diffDREB, data = training75)
 rpart.plot(model)
 model$variable.importance
-#printcp(model)
+model <- prune.rpart(model, cp=0.03) #plotcp(model) za odnos cp - sizeOfTree
+rpart.plot(model)
 
-model <- tree(WL ~ .-PTS-oppPTS, data = test75)
+model <- tree(WL ~ .-diffPTS, data = training75)
+model <- prune.tree(model, best=5) # broj listova
 plot(model)
-text(model, cex=0.5)
-
+text(model, cex=0.5, pretty=0)
 
 # model
 # summary(model)

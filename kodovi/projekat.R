@@ -1,10 +1,11 @@
 install.packages("readxl")
 install.packages("rpart")
 install.packages("rpart.plot")
-
+install.packages("randomForest")
 library("readxl")
 library("rpart")
 library("rpart.plot")
+library("randomForest")
 
 setwd("/Users/jovan.samke/Documents/GitHub/Primatijada22")
 df <- read_xlsx("./data/NBA_DataSet_Version1.xlsx")
@@ -28,12 +29,13 @@ colnames(df)[1] <- "WL"
 colnames(df)[6:8] <- c("ThreePM", "ThreePA", "ThreePpct")
 colnames(df)[24:26] <- c("oppThreePM", "oppThreePA", "oppThreePpct")
 colnames(df)[c(5,11,23,29)] <- c("FGpct", "FTpct", "oppFGpct", "oppFTpct")
+df <- df[c(-2,-3,-6,-9,-14,-20,-21,-24,-27,-32)]
 rm(dfopp)
 rm(dfteam)
 
-dfSimple <- data.frame(df[, 1:19])
-dfSimple[-1] <- dfSimple[-1] - df[20:37]
-colnames(dfSimple) <- paste(replicate(19, "diff"), colnames(dfSimple), sep="")
+dfSimple <- data.frame(df[, 1:14])
+dfSimple[-1] <- dfSimple[-1] - df[15:27]
+colnames(dfSimple) <- paste(replicate(13, "diff"), colnames(dfSimple), sep="")
 colnames(dfSimple)[1] <- "WL"
 
 genTrainingData <- function(df, q){
@@ -41,39 +43,70 @@ genTrainingData <- function(df, q){
   return(indeksi)
 }
 
-set.seed(1000)
-index <- genTrainingData(dfSimple, 0.90)
+################################################################################
+
+set.seed(12345)
+index <- genTrainingData(dfSimple, 0.9)
 trainingData <- dfSimple[index,]
 predictionData <- dfSimple[-index,]
 
-index <- genTrainingData(df, 0.75)
-trainingData <- df[index,]
-predictionData <- df[-index,]
+prop.table(table(trainingData$WL))
+prop.table(table(predictionData$WL))
 
-index <- genTrainingData(dfSimple, 0.60)
-trainingData <- dfSimple[index,]
-predictionData <- dfSimple[-index,]
-
-#prop.table(table(trainingData$WL))
-#prop.table(table(predictionData$WL))
-
-model <- rpart(WL ~ .-PTS-oppPTS-FGpct-oppFGpct-FGM-oppFGM, data = trainingData)
+model <- rpart(WL ~ .-diffFGpct, data = trainingData)
+rpart.plot(model)
+#plotcp(model)
+model <- prune.rpart(model, cp=0.011)
 rpart.plot(model)
 model$variable.importance
-model <- prune.rpart(model, cp=0.03) #plotcp(model) za odnos cp - sizeOfTree
-rpart.plot(model)
-
-model <- rpart(WL ~ .-diffPTS-diffFGpct-diffFGM, data = trainingData)
-rpart.plot(model)
-model$variable.importance
-model <- prune.rpart(model, cp=0.03) #plotcp(model) za odnos cp - sizeOfTree
-rpart.plot(model)
 
 results <- predict(model, predictionData, type = "class")
 sum(results == predictionData$WL)/nrow(predictionData)
 
+################################################################################
 
-# model <- tree(WL ~ .-diffPTS, data = trainingData)
-# model <- prune.tree(model, best=5) # broj listova
-# plot(model)
-# text(model, cex=0.5, pretty=0)
+set.seed(500)
+index <- genTrainingData(dfSimple, 0.75)
+trainingData <- dfSimple[index,]
+predictionData <- dfSimple[-index,]
+
+prop.table(table(trainingData$WL))
+prop.table(table(predictionData$WL))
+
+model <- rpart(WL ~ .-diffFGpct, data = trainingData)
+rpart.plot(model)
+#plotcp(model)
+model <- prune.rpart(model, cp=0.012)
+rpart.plot(model)
+model$variable.importance
+
+results <- predict(model, predictionData, type = "class")
+sum(results == predictionData$WL)/nrow(predictionData)
+
+################################################################################
+
+set.seed(1000)
+index <- genTrainingData(dfSimple, 0.6)
+trainingData <- dfSimple[index,]
+predictionData <- dfSimple[-index,]
+
+prop.table(table(trainingData$WL))
+prop.table(table(predictionData$WL))
+
+model <- rpart(WL ~ .-diffFGpct, data = trainingData)
+rpart.plot(model)
+#plotcp(model)
+model <- prune.rpart(model, cp=0.011)
+rpart.plot(model)
+model$variable.importance
+
+results <- predict(model, predictionData, type = "class")
+sum(results == predictionData$WL)/nrow(predictionData)
+summary(results)
+
+
+model <- randomForest(WL~., data = trainingData, ntree = 500)
+print(model)
+model$importance
+results <- predict(model,predictionData)
+sum(results == predictionData$WL)/nrow(predictionData)

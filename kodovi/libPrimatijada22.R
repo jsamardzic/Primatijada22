@@ -10,24 +10,18 @@ library("randomForest")
 
 cleanupDataFrame <- function(df){
   df <- na.omit(df)
-  df <- df[-c(1:3, 5, 24)]
+  df <- df[-c(1:3, 5:7, 10, 13, 18, 24)]
+  colnames(df)[c(1, 3:5, 7)] <- c("WL", "FGpct", "ThreePA", "ThreePpct", "FTpct")
   
-  df$`W/L` <- as.factor(df$`W/L`)
+  df$WL <- as.factor(df$WL)
   
-  df[20] <- 1:2160
-  colnames(df)[20] <- "index"
+  df[15] <- 1:2160
+  colnames(df)[15] <- "index"
   dfopp <- df[df$index%%2==0, ]
   dfteam <- df[df$index%%2!=0, ]
   colnames(dfopp) <- paste(replicate(20, "opp"), colnames(dfopp), sep="")
   df <- cbind(dfteam, dfopp)
-  df <- df[-c(20,21,40)]
-  
-  colnames(df)[1] <- "WL"
-  colnames(df)[6:8] <- c("ThreePM", "ThreePA", "ThreePpct")
-  colnames(df)[24:26] <- c("oppThreePM", "oppThreePA", "oppThreePpct")
-  colnames(df)[c(5,11,23,29)] <- c("FGpct", "FTpct", "oppFGpct", "oppFTpct")
-  df <- df[c(-2,-3,-6,-9,-14,-20,-21,-24,-27,-32)]
-
+  df <- df[-c(15,16,30)]
   
   return(df)
 }
@@ -37,6 +31,7 @@ simplifyDataFrame <- function(df){
   df2[-1] <- df2[-1] - df[15:27]
   colnames(df2) <- paste(replicate(13, "diff"), colnames(df2), sep="")
   colnames(df2)[1] <- "WL"
+  
   return(df2)
 }
 

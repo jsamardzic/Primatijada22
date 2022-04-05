@@ -1,5 +1,5 @@
 setwd("/Users/jovan.samke/Documents/GitHub/Primatijada22")
-source("primatijada22.R")
+source("./kodovi/libPrimatijada22.R")
 
 df <- cleanupDataFrame(read_xlsx("./data/NBA_DataSet_Version1.xlsx"))
 dfSimple <- simplifyDataFrame(df)

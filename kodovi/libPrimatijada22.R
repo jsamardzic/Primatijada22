@@ -59,13 +59,14 @@ modelDecisionTree <- function(df, q, s, cp){
   predictionData <- lista[[2]]
   
   model <- rpart(WL ~ .-diffFGpct, data = trainingData)
-  model$variable.importance
+  
   plotcp(model, minline=TRUE, upper = "size")
   printcp(model)
   model <- prune.rpart(model, cp)
   rpart.plot(model)
   
   calculateAccuracy(model, predictionData)
+  return(data.frame(names(model$variable.importance),model$variable.importance))
 }
 
 modelRandomForest <- function(df, q, s, n){
@@ -74,8 +75,8 @@ modelRandomForest <- function(df, q, s, n){
   predictionData <- lista[[2]]
   
   model <- randomForest(WL~.-diffFGpct, data = trainingData, ntree=n)
-  model$importance
-  print(model)
+  df1 <- model$importance[order(model$importance[,1],decreasing=T),]
   
   calculateAccuracy(model, predictionData)
+  return (df1)
 }

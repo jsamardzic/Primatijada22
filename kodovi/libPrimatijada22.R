@@ -10,26 +10,26 @@ library("randomForest")
 
 cleanupDataFrame <- function(df){
   df <- na.omit(df)
-  df <- df[-c(1:3, 5:7, 10, 13, 18, 24)]
-  colnames(df)[c(1, 3:5, 7)] <- c("WL", "FGpct", "ThreePA", "ThreePpct", "FTpct")
+  df <- df[-c(1:3, 5:7, 9, 10, 13, 18, 24)]
+  colnames(df)[c(1, 3:4, 6)] <- c("WL", "ThreePA", "ThreePpct", "FTpct")
   
   df$WL <- as.factor(df$WL)
   
-  df[15] <- 1:2160
-  colnames(df)[15] <- "index"
+  df[14] <- 1:2160
+  colnames(df)[14] <- "index"
   dfopp <- df[df$index%%2==0, ]
   dfteam <- df[df$index%%2!=0, ]
-  colnames(dfopp) <- paste(replicate(20, "opp"), colnames(dfopp), sep="")
+  colnames(dfopp) <- paste(replicate(14, "opp"), colnames(dfopp), sep="")
   df <- cbind(dfteam, dfopp)
-  df <- df[-c(15,16,30)]
+  df <- df[-c(14,15,28)]
   
   return(df)
 }
 
 simplifyDataFrame <- function(df){
-  df2 <- data.frame(df[, 1:14])
-  df2[-1] <- df2[-1] - df[15:27]
-  colnames(df2) <- paste(replicate(13, "diff"), colnames(df2), sep="")
+  df2 <- data.frame(df[, 1:13])
+  df2[-1] <- df2[-1] - df[14:25]
+  colnames(df2) <- paste(replicate(12, "diff"), colnames(df2), sep="")
   colnames(df2)[1] <- "WL"
   
   return(df2)
@@ -58,7 +58,7 @@ modelDecisionTree <- function(df, q, s, cp){
   trainingData <- lista[[1]]
   predictionData <- lista[[2]]
   
-  model <- rpart(WL ~ .-diffFGpct, data = trainingData)
+  model <- rpart(WL ~ ., data = trainingData)
   
   plotcp(model, minline=TRUE, upper = "size")
   model <- prune.rpart(model, cp)
@@ -71,7 +71,7 @@ modelRandomForest <- function(df, q, s, n){
   trainingData <- lista[[1]]
   predictionData <- lista[[2]]
   
-  model <- randomForest(WL~.-diffFGpct, data = trainingData, ntree=n)
+  model <- randomForest(WL~., data = trainingData, ntree=n)
   model$importance
   print(model)
   

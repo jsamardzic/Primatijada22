@@ -50,20 +50,27 @@ generateTrainingData <- function(df, q, s){
 
 calculateAccuracy <- function(model, predictionData){
   results <- predict(model, predictionData, type = "class")
-  sum(results == predictionData$WL)/nrow(predictionData)
+  return(sum(results == predictionData$WL)/nrow(predictionData))
 }
 
-modelDecisionTree <- function(df, q, s, cp){
-  lista <- generateTrainingData(df, q, s)
-  trainingData <- lista[[1]]
-  predictionData <- lista[[2]]
+modelDecisionTree <- function(df, q, cp, N, MAX){
+  accuracies <- replicate(N, 0)
+  for (i in 1:N){
+    lista <- generateTrainingData(df, q, sample(MAX, 1))
+    trainingData <- lista[[1]]
+    predictionData <- lista[[2]]
+    
+    model <- rpart(WL ~ ., data = trainingData)
+    #print(model$variable.importance)
+    #cat("\n")
+    #plotcp(model, minline=TRUE, upper = "size")
+    model <- prune.rpart(model, cp)
+    #rpart.plot(model)
+    accuracies[i] <- calculateAccuracy(model, predictionData)
+  }
   
-  model <- rpart(WL ~ ., data = trainingData)
-  
-  plotcp(model, minline=TRUE, upper = "size")
-  model <- prune.rpart(model, cp)
-  rpart.plot(model)
-  calculateAccuracy(model, predictionData)
+  print(mean(accuracies))
+  print(sd(accuracies))
 }
 
 modelRandomForest <- function(df, q, s, n){
